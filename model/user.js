@@ -27,20 +27,39 @@ var userDB = {
     },
     insertUser: function (user, callback) {
         console.log("userDB.insertUser() ...")
-    
-        var sql = 'INSERT INTO user (username, email, profile_pic_url) VALUES (?, ?, ?)';
         
-        db.query(sql, [user.username, user.email, user.profile_pic_url], function (err, result) {
-            if (err) {
+        var checkExist = "SELECT * FROM user WHERE username=?"
+        db.query(checkExist, [user.username], function(err, result){
+            if(err){
                 console.log(err);
                 return callback(err, null);
-            } 
-            else {
-                console.log(JSON.stringify(result));
-                console.log(result.affectedRows);
-                return callback(null, result);
             }
-          });
+            else{
+                console.log(result.length)
+                if(result.length != 0){
+                    result = "UserTaken";
+                    console.log("Username taken");
+                    return callback(null, result);
+                }
+                else{
+                    var sql = 'INSERT INTO user (username, email, profile_pic_url) VALUES (?, ?, ?)';
+        
+                    db.query(sql, [user.username, user.email, user.profile_pic_url], function (err, result) {
+                        if (err) {
+                            console.log(err);
+                            return callback(err, null);
+                        } 
+                        else {
+                            console.log(JSON.stringify(result));
+                            console.log(result.affectedRows);
+                            return callback(null, result);
+                        }
+                      });
+                }
+            }
+        })
+    
+
     },
     findUserByID: function (id, callback) {
         console.log("userDB.findUserByID() ...")
@@ -66,40 +85,44 @@ var userDB = {
     editUser: function (userID, user, callback) {
         console.log("userDB.editUser() ...");
 
-        var checkExist = "SELECT username FROM user WHERE username=?"
+        var checkExist = "SELECT * FROM user WHERE username=?"
         db.query(checkExist, [user.username], function(err, result){
             if(err){
                 console.log(err);
                 return callback(err, null);
             }
             else{
+                console.log(result.length)
                 if(result.length != 0){
                     result = "UserTaken";
                     console.log("Username taken");
                     return callback(null, result);
                 }
+                else{
+                    var sql = 'UPDATE user SET username=?, email=?, profile_pic_url=? WHERE userid=?';
+        
+                    db.query(sql, [user.username, user.email, user.profile_pic_url, userID], function (err, result) {
+                        if (err) {
+                            console.log(err);
+                            return callback(err, null);
+                        } 
+                        else {
+                            console.log(result.affectedRows);
+                
+                            if(result.affectedRows == 0){
+                              return callback(null, null);
+                            }
+                            else{
+                              return callback(null, result.affectedRows);
+                            }
+                            
+                        }
+                    });
+                }
             }
         })
     
-        var sql = 'UPDATE user SET username=?, email=?, profile_pic_url=? WHERE userid=?';
-        
-        db.query(sql, [user.username, user.email, user.profile_pic_url, userID], function (err, result) {
-            if (err) {
-                console.log(err);
-                return callback(err, null);
-            } 
-            else {
-                console.log(result.affectedRows);
-    
-                if(result.affectedRows == 0){
-                  return callback(null, null);
-                }
-                else{
-                  return callback(null, result.affectedRows);
-                }
-                
-            }
-        });
+
     },
     findAllListings: function (callback) {
         console.log("userDB.findAllListings() ...")
@@ -186,7 +209,7 @@ var userDB = {
                     return callback(null, null)
                 }
                 else{
-                    return callback(null, result[0]);
+                    return callback(null, result);
                 }
                 
             }
@@ -250,7 +273,7 @@ var userDB = {
                     return callback(null, null)
                 }
                 else{
-                    return callback(null, result[0]);
+                    return callback(null, result.slice(0,(result.length/3)-1));
                 }
                 
             }
