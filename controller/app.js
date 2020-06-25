@@ -92,11 +92,15 @@ app.post('/users', function(req, res){
  
     user.insertUser(myUser, function (err, result){
         if(!err){
-           var output = {
-              "User ID" : result.insertId
-           };
- 
-           res.status(201).send(output);
+           if(result=="UserTaken"){
+            res.status(422).send("Username is already taken!")             
+           }
+           else{
+            var output = {
+               "User ID" : result.insertId
+            };
+            res.status(201).send(output);
+           }
         } 
         else{
             res.status(500).send("Unknown error");
@@ -149,7 +153,7 @@ app.put('/users/:userID', function(req, res){
                 res.status(422).send("Username is already taken!")
              }
              else{
-                res.status(204)
+                res.status(204).send("")
              }
           }
           else{
